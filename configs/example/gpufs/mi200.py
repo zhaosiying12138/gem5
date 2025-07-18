@@ -153,7 +153,7 @@ def runMI200GPUFS(cpu_type):
     args.checkpoint_restore = 0
     args.disjoint = True
     args.timing_gpu = True
-    args.script = tempRunscript
+    # args.script = tempRunscript
     args.dgpu_xor_low_bit = 0
     args.gpu_device = "MI200"
 

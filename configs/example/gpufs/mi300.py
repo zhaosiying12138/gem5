@@ -74,7 +74,7 @@ echo "Running {} {}"
 echo "{}" | base64 -d > myapp
 chmod +x myapp
 ./myapp {}
-/sbin/m5 exit
+#/sbin/m5 exit
 """
 
 demo_runscript_with_checkpoint = """\
@@ -94,7 +94,7 @@ echo "{}" | base64 -d > myapp
 chmod +x myapp
 /sbin/m5 checkpoint
 ./myapp {}
-/sbin/m5 exit
+#/sbin/m5 exit
 """
 
 
@@ -153,7 +153,7 @@ def runMI300GPUFS(
         )
         b64file.write(runscriptStr)
 
-    args.script = tempRunscript
+    #    args.script = tempRunscript
 
     # Defaults for CPU
     args.cpu_type = "X86KvmCPU"

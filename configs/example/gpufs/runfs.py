@@ -52,6 +52,12 @@ from ruby import Ruby
 # GPU FS related
 from system.system import makeGpuFSSystem
 
+from m5.objects import (
+    PciHost,
+    PciVirtIO,
+    VirtIO9PDiod,
+)
+
 
 def addRunFSOptions(parser):
     parser.add_argument(
@@ -227,6 +233,50 @@ def addRunFSOptions(parser):
         default=0,
         help="Frequency in exec cycles of GPU progress prints",
     )
+
+
+_real_instantiate = m5.instantiate
+
+
+def _instantiate_with_9p(*args, **kwargs):
+    root = m5.objects.Root.getInstance()
+    sys = getattr(root, "system", None)
+
+    if sys and not hasattr(sys, "_virtio9p_added"):
+        viopci = PciVirtIO()
+        viopci.vio = VirtIO9PDiod()
+        viopci.vio.root = (
+            "/home/zhaosiying/codebase/compiler/gem5-vega/gem5/shared"
+        )
+        viopci.vio.socketPath = "/tmp/gem5_9p.sock"
+        sys.viopci = viopci
+
+        host_bridge = next(
+            obj for obj in sys.descendants() if isinstance(obj, PciHost)
+        )
+
+        viopci.host = host_bridge
+        viopci.pci_bus = 0
+        viopci.pci_dev = 2
+        viopci.pci_func = 0
+        viopci.pio = sys.iobus.mem_side_ports
+        viopci.dma = sys.iobus.cpu_side_ports
+
+        viopci.VendorID = 0x1AF4  # Red Hat
+        viopci.DeviceID = 0x1009  # Virtio 9P transport
+        viopci.SubClassCode = 0x80  # Misc device
+        viopci.ClassCode = 0xFF  # Misc device
+        viopci.Revision = 0x00
+        viopci.SubsystemID = 0x09  # 必须设置为9表示文件系统设备
+        viopci.InterruptPin = 1
+        viopci.InterruptLine = 11
+
+        sys._virtio9p_added = True
+
+    return _real_instantiate(*args, **kwargs)
+
+
+m5.instantiate = _instantiate_with_9p
 
 
 def runGpuFSSystem(args):
