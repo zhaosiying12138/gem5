@@ -599,7 +599,7 @@ def makeX86System(mem_mode, numCPUs=1, mdesc=None, workload=None, Ruby=False):
         polarity="ConformPolarity",
         trigger="ConformTrigger",
         source_bus_id=0,
-        source_bus_irq=0 + (4 << 2),
+        source_bus_irq=13,
         dest_io_apic_id=io_apic.id,
         dest_io_apic_intin=16,
     )

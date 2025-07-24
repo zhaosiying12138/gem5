@@ -1,0 +1,1 @@
+build/VEGA_X86/gem5.opt configs/example/gpufs/mi300.py --disk-image ../test/gem5-resources/src/x86-ubuntu-gpu-ml/disk-image/x86-ubuntu-gpu-ml --kernel ../test/gem5-resources/src/x86-ubuntu-gpu-ml/vmlinux-gpu-ml --app pytorch_test.py

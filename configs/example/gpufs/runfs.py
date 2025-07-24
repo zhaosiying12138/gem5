@@ -53,6 +53,11 @@ from ruby import Ruby
 from system.system import makeGpuFSSystem
 
 from m5.objects import (
+    EtherLink,
+    EtherTap,
+    EtherTapStub,
+    IGbE_e1000,
+    NSGigE,
     PciHost,
     PciVirtIO,
     VirtIO9PDiod,
@@ -243,22 +248,29 @@ def _instantiate_with_9p(*args, **kwargs):
     sys = getattr(root, "system", None)
 
     if sys and not hasattr(sys, "_virtio9p_added"):
-        viopci = PciVirtIO()
+        viopci = PciVirtIO(pci_bus=0, pci_dev=2, pci_func=0)
         viopci.vio = VirtIO9PDiod()
         viopci.vio.root = (
             "/home/zhaosiying/codebase/compiler/gem5-vega/gem5/shared"
         )
         viopci.vio.socketPath = "/tmp/gem5_9p.sock"
-        sys.viopci = viopci
+        sys.pc.south_bridge.viopci = viopci
 
-        host_bridge = next(
-            obj for obj in sys.descendants() if isinstance(obj, PciHost)
+        ethernet = IGbE_e1000(
+            pci_bus=0, pci_dev=5, pci_func=0
         )
+        ethernet.InterruptLine = 13
+        ethernet.InterruptPin = 1
+        sys.pc.south_bridge.nic = ethernet
+        # sys.pc.south_bridge.tap = EtherTap(
+        #     tun_clone_device="/dev/net/tun", tap_device_name="gem5-tap"
+        # )
+        sys.pc.south_bridge.tap = EtherTapStub()
 
-        viopci.host = host_bridge
-        viopci.pci_bus = 0
-        viopci.pci_dev = 2
-        viopci.pci_func = 0
+        sys.pc.south_bridge.link = EtherLink(speed="1Gbps", delay="50ns")
+        sys.pc.south_bridge.link.int0 = sys.pc.south_bridge.nic.interface
+        sys.pc.south_bridge.link.int1 = sys.pc.south_bridge.tap.tap
+
         viopci.pio = sys.iobus.mem_side_ports
         viopci.dma = sys.iobus.cpu_side_ports
 
@@ -270,6 +282,9 @@ def _instantiate_with_9p(*args, **kwargs):
         viopci.SubsystemID = 0x09  # 必须设置为9表示文件系统设备
         viopci.InterruptPin = 1
         viopci.InterruptLine = 11
+
+        ethernet.pio = sys.iobus.mem_side_ports
+        ethernet.dma = sys.iobus.cpu_side_ports
 
         sys._virtio9p_added = True
 
